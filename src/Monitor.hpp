@@ -64,7 +64,7 @@ public:
 
 private:
   std::mutex report_mutex_; // Мьютекс для потокобезопасности
-  std::unordered_map<std::string, long> memory_data_; // Кэш данных о памяти
+  std::unordered_map<std::string, long> memory_data_; // Данных о памяти
   std::vector<int> pids_;                             // Список PID процессов
   Report report_;                                     // Актуальный отчёт
 
@@ -95,6 +95,26 @@ private:
 
   /**
    * @brief Собрать информацию о загрузке CPU
+   * @details Метод делает два замера с интервалом в 1 секунду
+   *          и вычисляет загрузку каждого ядра
    */
   void inspectCpuLoad();
+
+  /**
+   * @brief Получить сэмпл загрузки CPU из /proc/stat
+   * @return std::vector<std::vector<unsigned long long>> Вектор с данными по
+   * каждому ядру Каждый внутренний вектор содержит значения: user, nice,
+   * system, idle, iowait, irq, softirq, steal, guest, guest_nice
+   */
+  std::vector<std::vector<unsigned long long>> getCpuSample();
+
+  /**
+   * @brief Рассчитать загрузку CPU на основе двух сэмплов
+   * @param prev_sample Предыдущий сэмпл
+   * @param curr_sample Текущий сэмпл
+   * @return std::vector<Core> Вектор с загрузкой каждого ядра
+   */
+  std::vector<Core> calculateCpuLoad(
+      const std::vector<std::vector<unsigned long long>> &prev_sample,
+      const std::vector<std::vector<unsigned long long>> &curr_sample);
 };

@@ -5,10 +5,12 @@
 #include <iostream>
 #include <sstream>
 
-Monitor::Monitor() {
-  // Инициализация
-}
+Monitor::Monitor() {}
 
+/**
+ * @brief Получить список всех PID в системе
+ * @return std::vector<int> Вектор с PID всех процессов
+ */
 std::vector<int> Monitor::getAllPids() {
   std::vector<int> pids;
   DIR *dir = opendir("/proc");
@@ -43,6 +45,13 @@ std::vector<int> Monitor::getAllPids() {
   return pids;
 }
 
+/**
+ * @brief Прочитать информацию о конкретном процессе из /proc/[pid]/status
+ * @param pid ID процесса
+ * @param info Ссылка на структуру ProcessInfo для заполнения
+ * @return true Если чтение успешно
+ * @return false Если процесс не существует или нет доступа
+ */
 bool Monitor::readProcessStatus(int pid, ProcessInfo &info) {
   std::string status_path = "/proc/" + std::to_string(pid) + "/status";
   std::ifstream status_file(status_path);
@@ -118,6 +127,9 @@ bool Monitor::readProcessStatus(int pid, ProcessInfo &info) {
   return true;
 }
 
+/**
+ * @brief Собрать информацию о памяти из /proc/meminfo
+ */
 void Monitor::inspectMemInfo() {
   std::ifstream meminfo("/proc/meminfo");
   if (!meminfo.is_open()) {
@@ -155,6 +167,9 @@ void Monitor::inspectMemInfo() {
   }
 }
 
+/**
+ * @brief Собрать информацию о всех процессах в системе
+ */
 void Monitor::inspectAllPids() {
   pids_ = getAllPids();
   report_.processData.clear();
@@ -168,18 +183,24 @@ void Monitor::inspectAllPids() {
   }
 }
 
-void Monitor::inspectCpuLoad() {
+/**
+ * @brief Получить сэмпл загрузки CPU из /proc/stat
+ * @return std::vector<std::vector<unsigned long long>> Вектор с данными по
+ * каждому ядру Каждый внутренний вектор содержит значения: user, nice, system,
+ * idle, iowait, irq, softirq, steal, guest, guest_nice
+ */
+std::vector<std::vector<unsigned long long>> Monitor::getCpuSample() {
   std::ifstream stat_file("/proc/stat");
   if (!stat_file.is_open()) {
     std::cerr << "Error: Cannot open /proc/stat" << std::endl;
-    return;
+    return {};
   }
 
+  std::vector<std::vector<unsigned long long>> samples;
   std::string line;
-  std::vector<std::vector<unsigned long long>> first_samples;
 
-  // Первая выборка
   while (std::getline(stat_file, line)) {
+    // Ищем строки, начинающиеся с "cpu", но не "cpu " (общая статистика)
     if (line.substr(0, 3) != "cpu" || (line.length() > 3 && line[3] == ' ')) {
       continue;
     }
@@ -194,60 +215,45 @@ void Monitor::inspectCpuLoad() {
       values.push_back(val);
     }
 
+    // Убеждаемся, что у нас есть хотя бы базовые значения (user, nice, system,
+    // idle)
     if (values.size() >= 4) {
-      first_samples.push_back(values);
+      samples.push_back(values);
     }
   }
   stat_file.close();
 
-  if (first_samples.empty()) {
-    std::cerr << "Warning: No CPU data found" << std::endl;
-    return;
-  }
+  return samples;
+}
 
-  // Ожидание 1 секунду
-  sleep(1);
+/**
+ * @brief Рассчитать загрузку CPU на основе двух сэмплов
+ * @param prev_sample Предыдущий сэмпл
+ * @param curr_sample Текущий сэмпл
+ * @return std::vector<Core> Вектор с загрузкой каждого ядра
+ */
+std::vector<Core> Monitor::calculateCpuLoad(
+    const std::vector<std::vector<unsigned long long>> &prev_sample,
+    const std::vector<std::vector<unsigned long long>> &curr_sample) {
 
-  // Вторая выборка
-  stat_file.open("/proc/stat");
-  std::vector<std::vector<unsigned long long>> second_samples;
-
-  while (std::getline(stat_file, line)) {
-    if (line.substr(0, 3) != "cpu" || (line.length() > 3 && line[3] == ' ')) {
-      continue;
-    }
-
-    std::istringstream iss(line);
-    std::string cpu_name;
-    iss >> cpu_name;
-
-    std::vector<unsigned long long> values;
-    unsigned long long val;
-    while (iss >> val) {
-      values.push_back(val);
-    }
-
-    if (values.size() >= 4) {
-      second_samples.push_back(values);
-    }
-  }
-  stat_file.close();
-
-  // Заполняем report_.cpuData
-  report_.cpuData.clear();
-  size_t num_cores = std::min(first_samples.size(), second_samples.size());
+  std::vector<Core> cpu_load;
+  size_t num_cores = std::min(prev_sample.size(), curr_sample.size());
 
   for (size_t i = 0; i < num_cores; ++i) {
-    unsigned long long prev_idle =
-        first_samples[i][3] + first_samples[i][4]; // idle + iowait
-    unsigned long long prev_total = 0;
-    for (auto v : first_samples[i])
-      prev_total += v;
+    // Idle время = idle + iowait
+    unsigned long long prev_idle = prev_sample[i][3] + prev_sample[i][4];
+    unsigned long long curr_idle = curr_sample[i][3] + curr_sample[i][4];
 
-    unsigned long long curr_idle = second_samples[i][3] + second_samples[i][4];
+    // Общее время = сумма всех значений
+    unsigned long long prev_total = 0;
+    for (auto v : prev_sample[i]) {
+      prev_total += v;
+    }
+
     unsigned long long curr_total = 0;
-    for (auto v : second_samples[i])
+    for (auto v : curr_sample[i]) {
       curr_total += v;
+    }
 
     unsigned long long diff_idle = curr_idle - prev_idle;
     unsigned long long diff_total = curr_total - prev_total;
@@ -260,10 +266,44 @@ void Monitor::inspectCpuLoad() {
     Core core;
     core.id = static_cast<uint32_t>(i);
     core.load = static_cast<float>(usage);
-    report_.cpuData.push_back(core);
+    cpu_load.push_back(core);
   }
+
+  return cpu_load;
 }
 
+/**
+ * @brief Собрать информацию о загрузке CPU
+ * @details Метод делает два замера с интервалом в 1 секунду
+ *          и вычисляет загрузку каждого ядра
+ */
+void Monitor::inspectCpuLoad() {
+  // Получаем первый сэмпл
+  std::vector<std::vector<unsigned long long>> first_sample = getCpuSample();
+
+  if (first_sample.empty()) {
+    std::cerr << "Warning: No CPU data found" << std::endl;
+    return;
+  }
+
+  sleep(1);
+
+  // Получаем второй сэмпл
+  std::vector<std::vector<unsigned long long>> second_sample = getCpuSample();
+
+  if (second_sample.empty()) {
+    std::cerr << "Warning: No CPU data found on second sample" << std::endl;
+    return;
+  }
+
+  // Рассчитываем загрузку CPU
+  report_.cpuData = calculateCpuLoad(first_sample, second_sample);
+}
+
+/**
+ * @brief Получить полный отчёт о состоянии системы
+ * @return Report Структура с данными о памяти, CPU и процессах
+ */
 Report Monitor::getReport() {
   std::lock_guard<std::mutex> lock(report_mutex_);
   try {
