@@ -2,31 +2,20 @@ cmake_minimum_required(VERSION 3.10)
 project(mtop)
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -Wall -pthread")
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Find libmicrohttpd
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(MICROHTTPD REQUIRED libmicrohttpd)
+# Для отладки - раскомментировать при необходимости
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -fsanitize=address")
 
-# Include directories
-include_directories(${MICROHTTPD_INCLUDE_DIRS})
-include_directories(src)
-
-# Source files
-set(SOURCES
+# Добавляем исходники
+add_executable(mtop
+    main.cpp
     src/Monitor.cpp
     src/MonitorServer.cpp
-    main.cpp
 )
 
-# Executable
-add_executable(mtop ${SOURCES})
+# Включаем директории
+target_include_directories(mtop PRIVATE src .)
 
-# Link libraries
-target_link_libraries(mtop 
-    ${MICROHTTPD_LIBRARIES}
-    pthread
-)
-
-# Compile options
-target_compile_options(mtop PRIVATE -Wall -Wextra)
+# Линкуем pthread
+target_link_libraries(mtop pthread)

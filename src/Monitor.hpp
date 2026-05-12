@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <dirent.h>
+#include <mutex>
 #include <string>
 #include <unistd.h>
 #include <unordered_map>
@@ -42,17 +43,10 @@ struct Report {
 
 /**
  * @brief Класс для мониторинга системных ресурсов Linux
- *
- * Предоставляет методы для сбора информации о памяти, CPU и процессах
- * через чтение виртуальной файловой системы /proc
  */
 class Monitor {
 public:
-  /**
-   * @brief Конструктор класса Monitor
-   */
   Monitor();
-
   /**
    * @brief Получить полный отчёт о состоянии системы
    * @return Report Структура с данными о памяти, CPU и процессах
@@ -64,14 +58,15 @@ public:
    */
   void printReport();
 
+  // Запрещаем копирование
+  Monitor(const Monitor &) = delete;
+  Monitor &operator=(const Monitor &) = delete;
+
 private:
-  std::unordered_map<std::string, long> memory_data; // Кэш данных о памяти
-  std::vector<int> pids;                             // Список PID процессов
-  std::vector<std::vector<unsigned long long>>
-      first_samples; // Первая выборка CPU
-  std::vector<std::vector<unsigned long long>>
-      second_samples; // Вторая выборка CPU
-  Report report;      // Актуальный отчёт
+  std::mutex report_mutex_; // Мьютекс для потокобезопасности
+  std::unordered_map<std::string, long> memory_data_; // Кэш данных о памяти
+  std::vector<int> pids_;                             // Список PID процессов
+  Report report_;                                     // Актуальный отчёт
 
   /**
    * @brief Получить список всех PID в системе
@@ -90,23 +85,16 @@ private:
 
   /**
    * @brief Собрать информацию о всех процессах в системе
-   *
-   * Заполняет report.processData и pids
    */
   void inspectAllPids();
 
   /**
    * @brief Собрать информацию о памяти из /proc/meminfo
-   *
-   * Заполняет report.memoryData
    */
   void inspectMemInfo();
 
   /**
    * @brief Собрать информацию о загрузке CPU
-   *
-   * Делает две выборки с интервалом 1 секунду и рассчитывает
-   * загрузку для каждого ядра. Заполняет report.cpuData
    */
   void inspectCpuLoad();
 };
