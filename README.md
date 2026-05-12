@@ -43,7 +43,7 @@ cd mtop
 # Создание директории для сборки
 mkdir build
  
-cp web build/
+cp -r web build/
  
 cd build
 
@@ -64,6 +64,10 @@ npm install --save-dev typescript
 
 # Компиляция
 npx tsc
+
+rm -rf build/web
+
+cp -r web build/
 
 # Или используйте готовый JavaScript (уже в web/script.js)
 ```
