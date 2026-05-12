@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Monitor - mtop</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 System Monitor</h1>
+            <div class="status">
+                <span class="status-indicator"></span>
+                <span id="update-time">Last update: --:--:--</span>
+            </div>
+        </header>
+
+        <div class="stats-grid">
+            <!-- Memory Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>💾 Memory Usage</h2>
+                </div>
+                <div class="card-content">
+                    <div class="memory-stats">
+                        <div class="stat-row">
+                            <span>Total:</span>
+                            <span id="mem-total">--</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>Available:</span>
+                            <span id="mem-available">--</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>Free:</span>
+                            <span id="mem-free">--</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>Cached:</span>
+                            <span id="mem-cached">--</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="mem-usage-bar" class="progress-fill" style="width: 0%">0%</div>
+                    </div>
+                    <div class="usage-text">
+                        <span id="mem-usage-percent">0</span>% used
+                    </div>
+                </div>
+            </div>
+
+            <!-- CPU Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>⚡ CPU Load</h2>
+                </div>
+                <div class="card-content">
+                    <div id="cpu-cores-container">
+                        <div class="cpu-total">
+                            <span>Average load:</span>
+                            <strong id="cpu-avg">0%</strong>
+                        </div>
+                        <div id="cpu-cores-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Processes Table -->
+        <div class="card full-width">
+            <div class="card-header">
+                <h2>📋 Processes</h2>
+                <div class="process-controls">
+                    <input type="text" id="process-search" placeholder="🔍 Search by name or PID..." class="search-input">
+                    <span id="process-count">0 processes</span>
+                </div>
+            </div>
+            <div class="card-content">
+                <div class="table-container">
+                    <table id="processes-table">
+                        <thead>
+                            <tr>
+                                <th>PID</th>
+                                <th>Name</th>
+                                <th>State</th>
+                                <th>Virtual Memory</th>
+                                <th>Physical Memory</th>
+                                <th>Threads</th>
+                            </tr>
+                        </thead>
+                        <tbody id="processes-body">
+                            <tr>
+                                <td colspan="6" class="loading">Loading processes...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/script.js"></script>
+</body>
+</html>
