@@ -1,12 +1,9 @@
 # mtop - Linux System Monitor
 
-[![C++](https://img.shields.io/badge/C++-20-blue.svg)](https://isocpp.org/)
+[![C++](https://img.shields.io/badge/C++-14-blue.svg)](https://isocpp.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 mtop - это веб-ориентированный системный монитор для Linux, предоставляющий информацию о памяти, загрузке CPU и запущенных процессах в реальном времени через веб-интерфейс.
-
-![System Monitor Screenshot](screenshot.png)
 
 ## Возможности
 
@@ -38,7 +35,7 @@ mtop - это веб-ориентированный системный мони�
 
 ```bash
 # Клонирование репозитория
-git clone https://github.com/yourusername/mtop.git
+git clone https://github.com/AlexeyL54/mtop.git
 cd mtop
 
 # Создание директории для сборки
