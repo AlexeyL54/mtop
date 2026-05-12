@@ -3,6 +3,8 @@
 [![C++](https://img.shields.io/badge/C++-14-blue.svg)](https://isocpp.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
 
+![System Monitor Interface](img/ui.png)
+
 mtop - это веб-ориентированный системный монитор для Linux, предоставляющий информацию о памяти, загрузке CPU и запущенных процессах в реальном времени через веб-интерфейс.
 
 ## Возможности
