@@ -196,7 +196,7 @@ function filterProcesses(): void {
 
   const processCountEl: HTMLElement | null = document.getElementById('process-count');
   if (processCountEl) {
-    processCountEl.textContent = `${visibleCount} процессов (${rows.length} всего)`;
+    processCountEl.textContent = `${visibleCount} processes (${rows.length} total)`;
   }
 }
 
@@ -238,7 +238,7 @@ async function updateProcesses(): Promise<void> {
     // Обновляем счетчик процессов
     const processCountEl: HTMLElement | null = document.getElementById('process-count');
     if (processCountEl) {
-      processCountEl.textContent = `${displayProcesses.length} процессов (${processes.length} всего)`;
+      processCountEl.textContent = `${displayProcesses.length} processes (${processes.length} total)`;
     }
 
     // Повторно применяем фильтрацию (сохраняем поисковый запрос)
@@ -254,7 +254,7 @@ async function updateProcesses(): Promise<void> {
 }
 
 /**
- * Экранирует HTML-символы для предотвращения XSS-атак
+ * Экранирует HTML-символы
  * @param str - Входная строка
  * @returns Экранированная строка
  */
