@@ -34,14 +34,18 @@ public:
   /**
    * @brief Конструктор, запускающий фоновый поток сбора данных
    * @param interval_mseconds Интервал обновления данных в миллисекундах (по
-   * умолчанию 200)
+   * умолчанию 300)
    */
-  explicit Processes(uint32_t interval_mseconds = 200);
+  explicit Processes(uint32_t interval_mseconds = 300);
 
   /**
    * @brief Деструктор, останавливающий фоновый поток
    */
   ~Processes();
+
+  // Запрет копирования
+  Processes(const Processes &) = delete;
+  Processes &operator=(const Processes &) = delete;
 
   /**
    * @brief Получить копию текущих данных о процессах

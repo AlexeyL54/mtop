@@ -27,6 +27,10 @@ public:
    */
   ~Memory();
 
+  // Запрет копирования
+  Memory(const Memory &) = delete;
+  Memory &operator=(const Memory &) = delete;
+
   /**
    * @brief Получить копию текущих данных о памяти
    * @return std::unordered_map<std::string, long> Словарь с параметрами памяти

@@ -30,7 +30,15 @@ public:
    *       но внутри делается sleep(1) для двух сэмплов
    */
   explicit Cpu(uint32_t interval_msec = 2000);
+
+  /**
+   * @brief Деструктор, останавливающий фоновый поток
+   */
   ~Cpu();
+
+  // Запрет копирования
+  Cpu(const Cpu &) = delete;
+  Cpu &operator=(const Cpu &) = delete;
 
   /**
    * @brief Получить текущие данные о загрузке CPU (потокобезопасно)
@@ -43,10 +51,6 @@ public:
    * @param interval_msec Новый интервал в миллисекундах
    */
   void setInterval(uint32_t interval_msec);
-
-  // Запрет копирования
-  Cpu(const Cpu &) = delete;
-  Cpu &operator=(const Cpu &) = delete;
 
 private:
   mutable std::shared_mutex mutex_;
