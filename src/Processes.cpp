@@ -8,10 +8,18 @@
 #include <mutex>
 #include <thread>
 
+/**
+ * @brief Конструктор, запускающий фоновый поток сбора данных
+ * @param interval_mseconds Интервал обновления данных в миллисекундах (по
+ * умолчанию 200)
+ */
 Processes::Processes(uint32_t interval_msec) : interval_(interval_msec) {
   worker_ = std::thread([this]() { update(); });
 }
 
+/**
+ * @brief Деструктор, останавливающий фоновый поток
+ */
 Processes::~Processes() {
   running_ = false;
   if (worker_.joinable()) {
@@ -19,15 +27,26 @@ Processes::~Processes() {
   }
 }
 
+/**
+ * @brief Получить копию текущих данных о процессах
+ * @return std::vector<ProcessInfo> Вектор с информацией о всех процессах
+ */
 std::vector<ProcessInfo> Processes::getData() const {
   std::shared_lock lock(mutex_);
   return data_; // Копируем данные
 }
 
+/**
+ * @brief Изменить интервал обновления данных
+ * @param interval_msec Новый интервал в миллисекундах
+ */
 void Processes::setInterval(uint32_t interval_msec) {
   interval_ = interval_msec;
 }
 
+/**
+ * @brief Основной цикл фонового потока
+ */
 void Processes::update() {
   while (running_) {
     try {
@@ -56,6 +75,10 @@ void Processes::update() {
   }
 }
 
+/**
+ * @brief Получить список всех PID в системе
+ * @return std::vector<int> Вектор с PID всех процессов
+ */
 std::vector<int> Processes::getAllPids() {
   std::vector<int> pids;
   DIR *dir = opendir("/proc");
@@ -91,6 +114,13 @@ std::vector<int> Processes::getAllPids() {
   return pids;
 }
 
+/**
+ * @brief Прочитать информацию о конкретном процессе из /proc/[pid]/status
+ * @param pid ID процесса
+ * @param info Ссылка на структуру ProcessInfo для заполнения
+ * @return true Если чтение успешно
+ * @return false Если процесс не существует или нет доступа
+ */
 bool Processes::readProcessStatus(int pid, ProcessInfo &info) {
   std::string status_path = "/proc/" + std::to_string(pid) + "/status";
   std::ifstream status_file(status_path);
@@ -109,7 +139,6 @@ bool Processes::readProcessStatus(int pid, ProcessInfo &info) {
 
     if (line.substr(0, 5) == "Name:") {
       info.name = line.substr(6);
-      // Trim whitespace
       auto end = info.name.find_last_not_of(" \t\n\r");
       if (end != std::string::npos) {
         info.name.erase(end + 1);

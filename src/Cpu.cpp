@@ -6,10 +6,20 @@
 #include <sstream>
 #include <string>
 
+/**
+ * @brief Конструктор запускает фоновый поток обновления
+ * @param interval_msec Интервал между обновлениями в миллисекундах (по
+ * умолчанию 2000)
+ * @note Реальная задержка между замерами = interval_msec,
+ *       но внутри делается sleep(1) для двух сэмплов
+ */
 Cpu::Cpu(uint32_t interval_msec) : interval_(interval_msec) {
   worker_ = std::thread([this]() { update(); });
 }
 
+/**
+ * @brief Деструктор, останавливающий фоновый поток
+ */
 Cpu::~Cpu() {
   running_ = false;
   if (worker_.joinable()) {
@@ -17,13 +27,24 @@ Cpu::~Cpu() {
   }
 }
 
+/**
+ * @brief Получить текущие данные о загрузке CPU (потокобезопасно)
+ * @return std::vector<Core> Копия актуальных данных
+ */
 std::vector<Core> Cpu::getData() const {
   std::shared_lock lock(mutex_);
   return data_;
 }
 
+/**
+ * @brief Изменить интервал обновления на лету
+ * @param interval_msec Новый интервал в миллисекундах
+ */
 void Cpu::setInterval(uint32_t interval_msec) { interval_ = interval_msec; }
 
+/**
+ * @brief Основной цикл фонового потока
+ */
 void Cpu::update() {
   while (running_) {
     try {
@@ -82,6 +103,11 @@ void Cpu::update() {
   }
 }
 
+/**
+ * @brief Получить сэмпл загрузки CPU из /proc/stat
+ * @return std::vector<std::vector<unsigned long long>> Вектор с данными по
+ * каждому ядру
+ */
 std::vector<std::vector<unsigned long long>> Cpu::getCpuSample() const {
   std::ifstream stat_file("/proc/stat");
   if (!stat_file.is_open()) {
@@ -117,6 +143,12 @@ std::vector<std::vector<unsigned long long>> Cpu::getCpuSample() const {
   return samples;
 }
 
+/**
+ * @brief Рассчитать загрузку CPU на основе двух сэмплов
+ * @param prev_sample Предыдущий сэмпл
+ * @param curr_sample Текущий сэмпл
+ * @return std::vector<Core> Вектор с загрузкой каждого ядра
+ */
 std::vector<Core> Cpu::calculateCpuLoad(
     const std::vector<std::vector<unsigned long long>> &prev_sample,
     const std::vector<std::vector<unsigned long long>> &curr_sample) const {
@@ -131,12 +163,12 @@ std::vector<Core> Cpu::calculateCpuLoad(
 
     // Общее время = сумма всех значений
     unsigned long long prev_total = 0;
-    for (auto v : prev_sample[i]) {
+    for (unsigned long long v : prev_sample[i]) {
       prev_total += v;
     }
 
     unsigned long long curr_total = 0;
-    for (auto v : curr_sample[i]) {
+    for (unsigned long long v : curr_sample[i]) {
       curr_total += v;
     }
 

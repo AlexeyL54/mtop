@@ -55,6 +55,9 @@ private:
   std::thread worker_;
   std::atomic<uint32_t> interval_;
 
+  /**
+   * @brief Основной цикл фонового потока
+   */
   void update();
 
   /**

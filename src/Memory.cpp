@@ -7,10 +7,18 @@
 #include <thread>
 #include <unordered_map>
 
+/**
+ * @brief Конструктор, запускающий фоновый поток сбора данных
+ * @param interval_msec Интервал обновления данных в миллисекундах (по умолчанию
+ * 400)
+ */
 Memory::Memory(uint32_t interval_msec) : interval_(interval_msec) {
   worker_ = std::thread([this]() { update(); });
 };
 
+/**
+ * @brief Деструктор, останавливающий фоновый поток
+ */
 Memory::~Memory() {
   running_ = false;
   if (worker_.joinable()) {
@@ -18,13 +26,25 @@ Memory::~Memory() {
   }
 }
 
+/**
+ * @brief Получить копию текущих данных о памяти
+ * @return std::unordered_map<std::string, long> Словарь с параметрами памяти
+ *         (ключи: MemTotal, MemFree, MemAvailable и др.)
+ */
 std::unordered_map<std::string, long> Memory::getData() const {
   std::shared_lock lock(mutex_);
   return data_;
 }
 
+/**
+ * @brief Изменить интервал обновления данных
+ * @param interval_msec Новый интервал в миллисекундах
+ */
 void Memory::setInterval(uint32_t interval_msec) { interval_ = interval_msec; }
 
+/**
+ * @brief Основной цикл фонового потока
+ */
 void Memory::update() {
   while (running_) {
 
@@ -45,6 +65,10 @@ void Memory::update() {
   }
 }
 
+/**
+ * @brief Прочитать данные из /proc/meminfo
+ * @return std::unordered_map<std::string, long> Словарь с параметрами памяти
+ */
 std::unordered_map<std::string, long> Memory::readMemInfo() const {
   std::ifstream meminfo("/proc/meminfo");
   if (!meminfo.is_open()) {

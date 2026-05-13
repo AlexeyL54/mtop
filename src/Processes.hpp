@@ -23,21 +23,49 @@ struct ProcessInfo {
   long nonvoluntarySwitches; // Недобровольные переключения контекста
 };
 
+/**
+ * @brief Мониторинг процессов системы
+ *
+ * Фоновый поток периодически собирает информацию о всех процессах
+ * из /proc/[pid]/status и предоставляет потокобезопасный доступ к данным.
+ */
 class Processes {
 public:
+  /**
+   * @brief Конструктор, запускающий фоновый поток сбора данных
+   * @param interval_mseconds Интервал обновления данных в миллисекундах (по
+   * умолчанию 200)
+   */
   explicit Processes(uint32_t interval_mseconds = 200);
+
+  /**
+   * @brief Деструктор, останавливающий фоновый поток
+   */
   ~Processes();
 
+  /**
+   * @brief Получить копию текущих данных о процессах
+   * @return std::vector<ProcessInfo> Вектор с информацией о всех процессах
+   */
   std::vector<ProcessInfo> getData() const;
+
+  /**
+   * @brief Изменить интервал обновления данных
+   * @param interval_msec Новый интервал в миллисекундах
+   */
   void setInterval(uint32_t interval_msec);
 
 private:
-  mutable std::shared_mutex mutex_;
-  std::atomic<bool> running_{true};
-  std::thread worker_;
-  std::atomic<uint32_t> interval_;
-  std::vector<ProcessInfo> data_;
+  mutable std::shared_mutex
+      mutex_; ///< Мьютекс для потокобезопасного доступа к data_
+  std::atomic<bool> running_{true}; // Флаг работы фонового потока
+  std::thread worker_;              // Фоновый поток сбора данных
+  std::atomic<uint32_t> interval_;  // Текущий интервал обновления (мс)
+  std::vector<ProcessInfo> data_;   // Кэш данных о процессах
 
+  /**
+   * @brief Основной цикл фонового потока
+   */
   void update();
 
   /**
