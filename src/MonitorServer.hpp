@@ -1,6 +1,9 @@
 #pragma once
 
-#include "Monitor.hpp"
+// #include "Monitor.hpp"
+#include "Cpu.hpp"
+#include "Memory.hpp"
+#include "Processes.hpp"
 #include <string>
 
 /**
@@ -45,13 +48,16 @@ private:
   uint16_t port_;      // Порт для HTTP сервера
   std::string webDir_; // Путь к директории с веб-файлами
   bool running_;       // Флаг работы сервера
+  Memory memory_monitor_;
+  Cpu cpu_monitor_;
+  Processes processes_monitor_;
 
   /**
    * @brief Возвращает синглтон монитора системы
    *
    * @return Monitor& Ссылка на единственный экземпляр Monitor
    */
-  Monitor &getMonitor();
+  // Monitor &getMonitor();
 
   /**
    * @brief Формирует JSON строку с данными о памяти

@@ -1,8 +1,12 @@
 #include "MonitorServer.hpp"
+#include "Cpu.hpp"
+#include "Memory.hpp"
+#include "Processes.hpp"
 #include "httplib.h"
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <unordered_map>
 
 /**
  * @brief Конструктор сервера мониторинга
@@ -11,7 +15,8 @@
  * @param webDir Путь к директории с веб-файлами (HTML, CSS, JS)
  */
 MonitorServer::MonitorServer(uint16_t port, const std::string &webDir)
-    : port_(port), webDir_(webDir), running_(false) {}
+    : port_(port), webDir_(webDir), running_(false), memory_monitor_(),
+      cpu_monitor_(), processes_monitor_() {}
 
 /**
  * @brief Читает содержимое файла
@@ -52,10 +57,10 @@ std::string MonitorServer::getMimeType(const std::string &path) {
  *
  * @return Monitor& Ссылка на единственный экземпляр Monitor
  */
-Monitor &MonitorServer::getMonitor() {
+/*Monitor &MonitorServer::getMonitor() {
   static Monitor monitor;
   return monitor;
-}
+}*/
 
 /**
  * @brief Формирует JSON строку с данными о памяти
@@ -63,11 +68,11 @@ Monitor &MonitorServer::getMonitor() {
  * @return std::string JSON вида {"ключ": значение, ...}
  */
 std::string MonitorServer::buildMemoryJson() {
-  Report report = getMonitor().getReport();
+  std::unordered_map<std::string, long> data = memory_monitor_.getData();
   std::stringstream json;
   json << "{";
   bool first = true;
-  for (const auto &pair : report.memoryData) {
+  for (const auto &pair : data) {
     if (!first)
       json << ",";
     json << "\"" << pair.first << "\":" << pair.second;
@@ -83,14 +88,13 @@ std::string MonitorServer::buildMemoryJson() {
  * @return std::string JSON с информацией о ядрах и их загрузке
  */
 std::string MonitorServer::buildCpuJson() {
-  Report report = getMonitor().getReport();
+  std::vector<Core> data = cpu_monitor_.getData();
   std::stringstream json;
-  json << "{\"total_cores\":" << report.cpuData.size() << ",\"cores\":[";
-  for (size_t i = 0; i < report.cpuData.size(); ++i) {
+  json << "{\"total_cores\":" << data.size() << ",\"cores\":[";
+  for (size_t i = 0; i < data.size(); ++i) {
     if (i > 0)
       json << ",";
-    json << "{\"id\":" << report.cpuData[i].id
-         << ",\"load\":" << report.cpuData[i].load << "}";
+    json << "{\"id\":" << data[i].id << ",\"load\":" << data[i].load << "}";
   }
   json << "]}";
   return json.str();
@@ -102,13 +106,13 @@ std::string MonitorServer::buildCpuJson() {
  * @return std::string JSON со списком процессов и их параметрами
  */
 std::string MonitorServer::buildProcessesJson() {
-  Report report = getMonitor().getReport();
+  std::vector<ProcessInfo> data = processes_monitor_.getData();
   std::stringstream json;
-  json << "{\"total\":" << report.processData.size() << ",\"processes\":[";
-  for (size_t i = 0; i < report.processData.size(); ++i) {
+  json << "{\"total\":" << data.size() << ",\"processes\":[";
+  for (size_t i = 0; i < data.size(); ++i) {
     if (i > 0)
       json << ",";
-    const ProcessInfo &p = report.processData[i];
+    const ProcessInfo &p = data[i];
     json << "{"
          << "\"pid\":" << p.pid << ","
          << "\"name\":\"" << p.name << "\","
