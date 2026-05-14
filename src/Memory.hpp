@@ -20,7 +20,7 @@ public:
    * @param interval_msec Интервал обновления данных в миллисекундах (по
    * умолчанию 400)
    */
-  explicit Memory(uint32_t interval_msec = 400);
+  explicit Memory(uint32_t interval_msec = 4000);
 
   /**
    * @brief Деструктор, останавливающий фоновый поток

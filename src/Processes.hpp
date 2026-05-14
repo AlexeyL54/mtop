@@ -34,9 +34,9 @@ public:
   /**
    * @brief Конструктор, запускающий фоновый поток сбора данных
    * @param interval_mseconds Интервал обновления данных в миллисекундах (по
-   * умолчанию 300)
+   * умолчанию 5000)
    */
-  explicit Processes(uint32_t interval_mseconds = 300);
+  explicit Processes(uint32_t interval_mseconds = 5000);
 
   /**
    * @brief Деструктор, останавливающий фоновый поток
