@@ -80,7 +80,6 @@ void Cpu::update() {
       std::vector<Core> fresh_data =
           calculateCpuLoad(first_sample, second_sample);
 
-      // Обновляем разделяемые данные
       {
         std::unique_lock lock(mutex_);
         data_ = std::move(fresh_data);
@@ -90,8 +89,6 @@ void Cpu::update() {
       std::cerr << "Cpu: Error: " << e.what() << std::endl;
     }
 
-    // Ждём до следующего цикла обновления
-    // Вычитаем 1 секунду, которую уже потратили на ожидание между замерами
     uint32_t remaining_ms = interval_.load();
     if (remaining_ms > 1000) {
       remaining_ms -= 1000;

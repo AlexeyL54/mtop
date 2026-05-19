@@ -303,8 +303,6 @@ tbody tr:hover {
     }
 }
 
-/* Add these styles at the end of styles.css */
-
 .process-state {
     display: inline-block;
     padding: 3px 8px;
